@@ -1,3 +1,4 @@
+from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
 import os
 from dotenv import load_dotenv
 
@@ -22,4 +23,13 @@ class PostgresSettings:
     def get_sync_url(cls):
         return f"postgresql+psycopg2://{cls.USERNAME}:{cls.PASSWORD}@{cls.HOST}:{cls.PORT}/{cls.DB}"
 
+    @classmethod
+    def get_session(cls):
+        def get_engine():
+            return create_async_engine(cls.get_async_url(), pool_size=20, max_overflow=40, echo=True)
 
+        return async_sessionmaker(
+            bind=get_engine(),
+            class_=AsyncSession,
+            expire_on_commit=False
+        )

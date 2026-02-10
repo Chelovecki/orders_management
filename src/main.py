@@ -1,7 +1,24 @@
-from  fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
+from src.exceptions import UserAlreadyExistsError
+from src.auth.router import auth_router
+
 
 app = FastAPI()
 
-@app.get('/')
-def get_():
-    return 'hello world'
+
+@app.exception_handler(UserAlreadyExistsError)
+async def user_exists_handler(
+    request: Request,
+    exc: UserAlreadyExistsError
+):
+    return JSONResponse(
+        status_code=409,
+        content={
+            'error': 'user_exists_handler',
+            'field': exc.field,
+            'value': exc.value
+        }
+    )
+
+app.include_router(auth_router)
