@@ -65,6 +65,11 @@ class UserModel(Base):
         nullable=False
     )
 
+    password_hash: Mapped[str] = mapped_column(
+        String(255),
+        nullable=False
+    )
+
     # one-to-many
     orders: Mapped[list['OrderModel']] = relationship(
         'OrderModel',
