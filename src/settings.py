@@ -1,7 +1,7 @@
 import os
 from dotenv import load_dotenv
 
-load_dotenv('docker/.env')
+load_dotenv('docker/.env.local')
 
 
 class PostgresSettings:
