@@ -21,4 +21,18 @@ async def user_exists_handler(
         }
     )
 
+
+@app.exception_handler(InvalidCredentialsError)
+async def invalid_credentials_handler(
+    request: Request,
+    exc: InvalidCredentialsError
+):
+    return JSONResponse(
+        status_code=401,
+        content={
+            'error': 'invalid_credentials_handler',
+            'msg': 'Invalid credentials',
+        }
+
+    )
 app.include_router(auth_router)
