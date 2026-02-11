@@ -1,7 +1,9 @@
-from datetime import datetime
 import uuid
-from pydantic import ConfigDict, Field, BaseModel
+from datetime import datetime
 from decimal import Decimal
+
+from pydantic import Field
+
 from src.api.dependencies import BaseSchema
 from src.api.users.schemas import UserSchema
 from src.models import OrderConditions

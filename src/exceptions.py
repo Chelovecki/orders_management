@@ -6,7 +6,6 @@ class UserAlreadyExistsError(Exception):
 
 class InvalidCredentialsError(Exception):
     """Raised when authentication fails."""
-    pass
 
 
 class OrderNotFoundError(Exception):

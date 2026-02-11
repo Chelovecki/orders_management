@@ -1,4 +1,4 @@
-from pydantic import BaseModel, ConfigDict, Field, EmailStr
+from pydantic import EmailStr, Field
 
 from src.api.dependencies import BaseSchema
 
@@ -10,10 +10,6 @@ class UserSchema(BaseSchema):
 
 
 class UserRegisterSchema(BaseSchema):
-    name: str = Field(
-        ...,
-        max_length=100,
-        description='Input your username'
-    )
-    email: EmailStr = Field(..., description='Input your email')
+    name: str = Field(..., max_length=100, description="Input your username")
+    email: EmailStr = Field(..., description="Input your email")
     password: str

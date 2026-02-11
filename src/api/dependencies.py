@@ -4,14 +4,12 @@ from pydantic import BaseModel, ConfigDict
 from src.exceptions import InvalidCredentialsError
 from src.models import UserModel
 from src.security.jwt import decode_token
-from src.settings import oauth2_scheme, PostgresSettings
+from src.settings import PostgresSettings, oauth2_scheme
 
 
-async def get_current_user(
-    token: str = Depends(oauth2_scheme)
-):
+async def get_current_user(token: str = Depends(oauth2_scheme)):
     payload = decode_token(token)
-    user_id = payload.get('sub')
+    user_id = payload.get("sub")
 
     if not user_id:
         raise InvalidCredentialsError()
@@ -26,7 +24,4 @@ async def get_current_user(
 
 
 class BaseSchema(BaseModel):
-    model_config = ConfigDict(
-        extra='forbid',
-        from_attributes=True
-    )
+    model_config = ConfigDict(extra="forbid", from_attributes=True)

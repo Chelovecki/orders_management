@@ -1,8 +1,9 @@
 from sqlalchemy import select
-from src.security.passwords import verify_password
-from src.security.jwt import create_access_token
+
 from src.exceptions import InvalidCredentialsError
 from src.models import UserModel
+from src.security.jwt import create_access_token
+from src.security.passwords import verify_password
 from src.services import BaseService
 from src.settings import PostgresSettings
 
