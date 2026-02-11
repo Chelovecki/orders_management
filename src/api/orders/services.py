@@ -1,7 +1,8 @@
 from fastapi import Depends
+import sqlalchemy
 from sqlalchemy.exc import IntegrityError
 
-from src.exceptions import InvalidCredentialsError, UserAlreadyExistsError
+from src.exceptions import InvalidCredentialsError, UserAlreadyExistsError, OrderNotFoundError
 from src.models import OrderModel
 from src.services import BaseService
 from src.settings import PostgresSettings, oauth2_scheme
@@ -36,6 +37,10 @@ class OrderServices(BaseService):
             await session.commit()
             await session.refresh(order, ['user'])
             return order
+
+    async def get_order(self, order_id: str) -> OrderModel:
+        async with self.session_factory() as session:
+            return await session.get(OrderModel, order_id)
 
 
 order_services = OrderServices(PostgresSettings.get_session())

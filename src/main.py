@@ -1,6 +1,6 @@
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
-from src.exceptions import UserAlreadyExistsError, InvalidCredentialsError
+from src.exceptions import UserAlreadyExistsError, InvalidCredentialsError, OrderNotFoundError
 from src.api.auth.router import auth_router
 from src.api.users.router import user_router
 from src.api.orders.router import order_router
@@ -37,6 +37,22 @@ async def invalid_credentials_handler(
         }
 
     )
+
+
+@app.exception_handler(OrderNotFoundError)
+async def order_not_found_handler(
+    request: Request,
+    exc: OrderNotFoundError
+):
+    return JSONResponse(
+        status_code=404,
+        content={
+            'error': 'order_not_found_handler',
+            'msg': f"Order '{exc.order_id}' doesn't found",
+        }
+
+    )
+
 app.include_router(auth_router)
 app.include_router(user_router)
 app.include_router(order_router)

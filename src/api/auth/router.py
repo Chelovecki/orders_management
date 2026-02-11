@@ -4,8 +4,7 @@ from src.api.users.services import user_services
 from src.api.users.schemas import UserRegisterSchema, UserSchema
 from src.api.auth.services import auth_services
 
-auth_router = APIRouter(prefix='/auth')
-# правильно ли тут хранить эту схему?
+auth_router = APIRouter(prefix='/auth', tags=['auth'])
 
 
 @auth_router.post('/token')

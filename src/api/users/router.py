@@ -4,7 +4,7 @@ from src.api.users.schemas import UserRegisterSchema, UserSchema
 from src.api.users.services import user_services
 
 
-user_router = APIRouter(prefix='/user')
+user_router = APIRouter(prefix='/user', tags=['users'])
 
 
 @user_router.post('/register')
