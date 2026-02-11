@@ -1,7 +1,9 @@
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
-from src.exceptions import UserAlreadyExistsError
-from src.auth.router import auth_router
+from src.exceptions import UserAlreadyExistsError, InvalidCredentialsError
+from src.api.auth.router import auth_router
+from src.api.users.router import user_router
+from src.api.orders.router import order_router
 
 
 app = FastAPI()
@@ -36,3 +38,5 @@ async def invalid_credentials_handler(
 
     )
 app.include_router(auth_router)
+app.include_router(user_router)
+app.include_router(order_router)
