@@ -1,8 +1,11 @@
+import uuid
 from uuid import UUID
 
+from sqlalchemy import select
+
 from src.api.orders.schemas import OrderItemSchema
-from src.exceptions import OrderNotFoundError
-from src.models import OrderModel
+from src.exceptions import OrderNotFoundError, UserNotFoundError
+from src.models import OrderModel, UserModel
 from src.services import BaseService
 from src.settings import PostgresSettings
 
@@ -15,7 +18,9 @@ class OrderServices(BaseService):
         self, user_id: int, items: list[OrderItemSchema]
     ) -> OrderModel:
 
-        items_data = [{**item.model_dump(), "price": str(item.price)} for item in items]
+        items_data = [
+            {**item.model_dump(), "price": float(item.price)} for item in items
+        ]
 
         total_sum = sum(item.price * item.quantity for item in items)
 
@@ -28,21 +33,46 @@ class OrderServices(BaseService):
             return order
 
     async def get_order(self, order_id: str) -> OrderModel:
+        try:
+            order_uuid = uuid.UUID(order_id)
+        except ValueError:  # 'badly formed hexadecimal UUID string'
+            raise OrderNotFoundError(order_id)
+
         async with self.session_factory() as session:
-            return await session.get(OrderModel, order_id)
+            order = await session.get(OrderModel, order_uuid)
+
+            if not order:
+                raise OrderNotFoundError(order_id)
+
+            return order
 
     async def update_status_order(self, order_id: UUID, new_status: str) -> OrderModel:
         async with self.session_factory() as session:
             order = await session.get(OrderModel, order_id)
 
             if not order:
-                raise OrderNotFoundError(order)
+                raise OrderNotFoundError(order_id)
 
             order.status = new_status
 
             session.add(order)
             await session.commit()
             return order
+
+    async def get_users_orders(self, user_id: int) -> list[OrderModel]:
+        async with self.session_factory() as session:
+            user = await session.get(UserModel, user_id)
+
+            if not user:
+                raise UserNotFoundError
+
+            stmt = select(OrderModel).where(OrderModel.user_id == user_id)
+            res = await session.execute(statement=stmt)
+            orders = res.scalars().all()
+            print(type(orders), orders)
+            return orders
+
+            # todo добавить limit и offset
 
 
 order_services = OrderServices(PostgresSettings.get_session())

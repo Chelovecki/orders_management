@@ -18,6 +18,9 @@ class OrderSchema(BaseSchema):
 
     user: UserSchema
 
+    def __init__(self, **data):
+        super().__init__(**data)
+
 
 class OrderItemSchema(BaseSchema):
     name: str
