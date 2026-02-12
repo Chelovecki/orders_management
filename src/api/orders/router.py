@@ -1,7 +1,9 @@
+import uuid
+
 from fastapi import APIRouter, Depends
 
 from src.api.dependencies import get_current_user
-from src.api.orders.schemas import OrderCreateSchema, OrderSchema
+from src.api.orders.schemas import OrderCreateSchema, OrderSchema, OrderUpdateSchema
 from src.api.orders.services import order_services
 from src.exceptions import OrderNotFoundError
 from src.models import UserModel
@@ -28,4 +30,16 @@ async def get_order(
     if not order or order.user_id != current_user.id:
         raise OrderNotFoundError(order_id)
 
+    return OrderSchema.model_validate(order)
+
+
+@order_router.patch("/orders/{order_id}")
+async def change_order(
+    order_id: uuid.UUID,
+    form_data: OrderUpdateSchema,
+    current_user: UserModel = Depends(get_current_user),
+) -> OrderSchema:
+    order = await order_services.update_status_order(
+        order_id=order_id, new_status=form_data.status
+    )
     return OrderSchema.model_validate(order)

@@ -27,3 +27,7 @@ class OrderItemSchema(BaseSchema):
 
 class OrderCreateSchema(BaseSchema):
     items: list[OrderItemSchema] = Field(...)
+
+
+class OrderUpdateSchema(BaseSchema):
+    status: OrderConditions

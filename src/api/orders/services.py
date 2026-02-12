@@ -1,4 +1,7 @@
+from uuid import UUID
+
 from src.api.orders.schemas import OrderItemSchema
+from src.exceptions import OrderNotFoundError
 from src.models import OrderModel
 from src.services import BaseService
 from src.settings import PostgresSettings
@@ -27,6 +30,19 @@ class OrderServices(BaseService):
     async def get_order(self, order_id: str) -> OrderModel:
         async with self.session_factory() as session:
             return await session.get(OrderModel, order_id)
+
+    async def update_status_order(self, order_id: UUID, new_status: str) -> OrderModel:
+        async with self.session_factory() as session:
+            order = await session.get(OrderModel, order_id)
+
+            if not order:
+                raise OrderNotFoundError(order)
+
+            order.status = new_status
+
+            session.add(order)
+            await session.commit()
+            return order
 
 
 order_services = OrderServices(PostgresSettings.get_session())
