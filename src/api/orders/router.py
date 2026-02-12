@@ -25,7 +25,9 @@ async def create_order(
 async def get_order(
     order_id: str, current_user: UserModel = Depends(get_current_user)
 ) -> OrderSchema:
-    order = await order_services.get_order(order_id=order_id)
+    order = await order_services.get_order(
+        order_id=order_id, request_from_user_id=current_user.id
+    )
 
     if order.user_id != current_user.id:
         raise OrderNotFoundError(order_id)

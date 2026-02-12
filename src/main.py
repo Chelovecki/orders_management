@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, status
 from fastapi.responses import JSONResponse
 
 from src.api.auth.router import auth_router
@@ -6,6 +6,7 @@ from src.api.orders.router import order_router
 from src.api.users.router import user_router
 from src.exceptions import (
     InvalidCredentialsError,
+    InvalidOrderError,
     OrderNotFoundError,
     UserAlreadyExistsError,
 )
@@ -44,6 +45,14 @@ async def order_not_found_handler(request: Request, exc: OrderNotFoundError):
             "error": "order_not_found_handler",
             "msg": f"Order '{exc.order_id}' doesn't found",
         },
+    )
+
+
+@app.exception_handler(InvalidOrderError)
+async def invalid_order_handler(request: Request, exc: InvalidOrderError):
+    return JSONResponse(
+        status_code=status.HTTP_400_BAD_REQUEST,
+        content={"error": "invalid_order_handler", "msg": exc.msg},
     )
 
 

@@ -26,3 +26,10 @@ class OrderNotFoundError(Exception):
 
     def __init__(self, order_id: UUID):
         self.order_id = order_id
+
+
+class InvalidOrderError(Exception):
+    """Raises when an error occurs when creating a new order"""
+
+    def __init__(self, error_msg):
+        self.msg = error_msg

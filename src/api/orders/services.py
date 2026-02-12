@@ -1,10 +1,11 @@
 import uuid
+from decimal import Decimal
 from uuid import UUID
 
 from sqlalchemy import select
 
 from src.api.orders.schemas import OrderItemSchema
-from src.exceptions import OrderNotFoundError, UserNotFoundError
+from src.exceptions import InvalidOrderError, OrderNotFoundError, UserNotFoundError
 from src.models import OrderModel, UserModel
 from src.services import BaseService
 from src.settings import PostgresSettings
@@ -17,10 +18,24 @@ class OrderServices(BaseService):
     async def create_order(
         self, user_id: int, items: list[OrderItemSchema]
     ) -> OrderModel:
+        if not items:
+            raise InvalidOrderError("Order must contain at least one item")
 
-        items_data = [
-            {**item.model_dump(), "price": float(item.price)} for item in items
-        ]
+        items_data = []
+        for item in items:
+            values = item.model_dump()
+            if values["price"] <= Decimal("0.00"):
+                raise InvalidOrderError(
+                    f"Item '{values['name']}' should have positive price (0>)"
+                )
+
+            if values["quantity"] <= 0:
+                raise InvalidOrderError(
+                    f"Amount of item '{values['name']}' should be >=1 "
+                )
+
+            values["price"] = str(values["price"])
+            items_data.append(values)
 
         total_sum = sum(item.price * item.quantity for item in items)
 
@@ -32,7 +47,7 @@ class OrderServices(BaseService):
             await session.refresh(order, ["user"])
             return order
 
-    async def get_order(self, order_id: str) -> OrderModel:
+    async def get_order(self, order_id: str, request_from_user_id: int) -> OrderModel:
         try:
             order_uuid = uuid.UUID(order_id)
         except ValueError:  # 'badly formed hexadecimal UUID string'
@@ -41,7 +56,7 @@ class OrderServices(BaseService):
         async with self.session_factory() as session:
             order = await session.get(OrderModel, order_uuid)
 
-            if not order:
+            if not order or order.user_id != request_from_user_id:
                 raise OrderNotFoundError(order_id)
 
             return order

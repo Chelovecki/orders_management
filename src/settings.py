@@ -27,18 +27,17 @@ class PostgresSettings:
 
     @classmethod
     def get_session(cls):
-        def get_engine():
-            return create_async_engine(
-                cls.get_async_url(),
-                pool_pre_ping=True,
-                pool_size=20,
-                max_overflow=40,
-                echo=True,
-            )
-
         return async_sessionmaker(
-            bind=get_engine(), class_=AsyncSession, expire_on_commit=False
+            bind=cls.ENGINE(), class_=AsyncSession, expire_on_commit=False
         )
+
+    ENGINE = create_async_engine(
+        get_async_url(),
+        pool_pre_ping=True,
+        pool_size=20,
+        max_overflow=40,
+        echo=True,
+    )
 
 
 class JWT:
