@@ -16,7 +16,7 @@ if config.config_file_name is not None:
 
 
 target_metadata = Base.metadata
-config.set_main_option('sqlalchemy.url', PostgresSettings.get_sync_url())
+config.set_main_option('sqlalchemy.url', PostgresSettings.sync_url)
 
 
 def run_migrations_offline() -> None:

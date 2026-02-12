@@ -7,3 +7,10 @@ services:
     env_file:
       - .env
 
+  redis:
+    image: redis:alpine
+    container_name: redis_db
+    ports:
+      - "6379:6379"
+    env_file:
+      - .env

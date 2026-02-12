@@ -13,31 +13,25 @@ class PostgresSettings:
     USERNAME = os.getenv("POSTGRES_USERNAME")
     PORT = int(os.getenv("POSTGRES_PORT", "5432"))
     PASSWORD = os.getenv("POSTGRES_PASSWORD")
+    async_url = f"postgresql+asyncpg://{USERNAME}:{PASSWORD}@{HOST}:{PORT}/{DB}"
+    sync_url = f"postgresql+psycopg2://{USERNAME}:{PASSWORD}@{HOST}:{PORT}/{DB}"
+
+    ENGINE = create_async_engine(
+        async_url,
+        pool_pre_ping=True,
+        pool_size=20,
+        max_overflow=40,
+        # echo=True,
+    )
 
     if not PASSWORD:
         raise Exception('The password is required. Set it in ".env"')
 
     @classmethod
-    def get_async_url(cls):
-        return f"postgresql+asyncpg://{cls.USERNAME}:{cls.PASSWORD}@{cls.HOST}:{cls.PORT}/{cls.DB}"
-
-    @classmethod
-    def get_sync_url(cls):
-        return f"postgresql+psycopg2://{cls.USERNAME}:{cls.PASSWORD}@{cls.HOST}:{cls.PORT}/{cls.DB}"
-
-    @classmethod
     def get_session(cls):
         return async_sessionmaker(
-            bind=cls.ENGINE(), class_=AsyncSession, expire_on_commit=False
+            bind=cls.ENGINE, class_=AsyncSession, expire_on_commit=False
         )
-
-    ENGINE = create_async_engine(
-        get_async_url(),
-        pool_pre_ping=True,
-        pool_size=20,
-        max_overflow=40,
-        echo=True,
-    )
 
 
 class JWT:
@@ -51,3 +45,9 @@ class JWT:
 
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/token")
+
+
+class RedisSettings:
+    HOST = os.getenv("REDIS_HOST", "localhost")
+    PORT = int(os.getenv("REDIS_PORT", "6379"))
+    DB = int(os.getenv("REDIS_DB", "0"))

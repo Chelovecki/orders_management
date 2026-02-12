@@ -39,7 +39,8 @@ class OrderServices(BaseService):
 
         total_sum = sum(item.price * item.quantity for item in items)
 
-        order = OrderModel(user_id=user_id, items=items_data, total_price=total_sum)
+        order = OrderModel(user_id=user_id, items=items_data,
+                           total_price=total_sum)
 
         async with self.session_factory() as session:
             session.add(order)
@@ -47,25 +48,23 @@ class OrderServices(BaseService):
             await session.refresh(order, ["user"])
             return order
 
-    async def get_order(self, order_id: str, request_from_user_id: int) -> OrderModel:
-        try:
-            order_uuid = uuid.UUID(order_id)
-        except ValueError:  # 'badly formed hexadecimal UUID string'
-            raise OrderNotFoundError(order_id)
+    async def get_order(self, order_id: uuid.UUID, request_from_user_id: int) -> OrderModel:
 
-        async with self.session_factory() as session:
-            order = await session.get(OrderModel, order_uuid)
-
-            if not order or order.user_id != request_from_user_id:
-                raise OrderNotFoundError(order_id)
-
-            return order
-
-    async def update_status_order(self, order_id: UUID, new_status: str) -> OrderModel:
         async with self.session_factory() as session:
             order = await session.get(OrderModel, order_id)
 
-            if not order:
+            if not order or order.user_id != request_from_user_id:
+                raise OrderNotFoundError(order_id)
+            return order
+
+    async def update_status_order(
+        self, order_id: UUID, request_from_user_id: int, new_status: str
+    ) -> OrderModel:
+        async with self.session_factory() as session:
+            order = await session.get(OrderModel, order_id)
+
+            if not order or order.user_id != request_from_user_id:
+                print(bool(order), bool(order.user_id != request_from_user_id))
                 raise OrderNotFoundError(order_id)
 
             order.status = new_status
@@ -83,9 +82,8 @@ class OrderServices(BaseService):
 
             stmt = select(OrderModel).where(OrderModel.user_id == user_id)
             res = await session.execute(statement=stmt)
-            orders = res.scalars().all()
-            print(type(orders), orders)
-            return orders
+
+            return res.scalars().all()
 
             # todo добавить limit и offset
 
