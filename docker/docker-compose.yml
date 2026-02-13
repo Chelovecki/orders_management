@@ -9,6 +9,17 @@ services:
     environment:
       - POSTGRES_HOST=postgres
 
+    healthcheck:
+      test:
+        ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-} -d ${POSTGRES_DB:-}"]
+      interval: 5s
+      timeout: 2s
+      retries: 5
+    
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
   redis:
     image: redis:alpine
     container_name: redis_db
@@ -18,16 +29,103 @@ services:
       - .env
     environment:
       - REDIS_HOST=redis
+    
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    restart: unless-stopped
 
   rabbitmq:
     image: rabbitmq:3-management
     container_name: rabbitmq
     ports:
-      - "5672:5672" # основной
-      - "15672:15672" # веб-интерфейс
+      - "5672:5672"      # основной порт
+      - "15672:15672"    # веб-интерфейс
     env_file:
       - .env
     environment:
       - RABBITMQ_HOST=rabbitmq
-
+      - RABBITMQ_DEFAULT_USER=guest
+      - RABBITMQ_DEFAULT_PASSWORD=guest
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     restart: unless-stopped
+  
+    app:
+      build:
+        context: ..
+        dockerfile: docker/Dockerfile
+      container_name: fastapi_app
+      env_file:
+        - .env
+      environment:
+        - POSTGRES_HOST=postgres
+        - REDIS_HOST=redis
+        - RABBITMQ_HOST=rabbitmq
+      ports:
+        - "8000:8000"
+      command: uvicorn src.main:app --host 0.0.0.0 --reload
+      depends_on:
+        postgres:
+          condition: service_healthy
+        redis:
+          condition: service_healthy
+        rabbitmq:
+          condition: service_healthy
+      volumes:
+        - ../src:/app/src   # только для разработки
+      restart: unless-stopped
+
+  celery_worker:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: celery_worker
+    env_file:
+      - .env
+    environment:
+      - POSTGRES_HOST=postgres
+      - REDIS_HOST=redis
+      - RABBITMQ_HOST=rabbitmq
+    command: celery -A src.celery_app worker --loglevel=info
+    depends_on:
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    volumes:
+      - ../src:/app/src
+    restart: unless-stopped
+
+  consumer:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: rabbitmq_consumer
+    env_file:
+      - .env
+    environment:
+      - POSTGRES_HOST=postgres
+      - REDIS_HOST=redis
+      - RABBITMQ_HOST=rabbitmq
+    command: python -m src.consumer
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ../src:/app/src
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  redis_data:
