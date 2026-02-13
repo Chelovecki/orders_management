@@ -1,6 +1,7 @@
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request, status
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from src.api.auth.router import auth_router
@@ -23,6 +24,19 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(lifespan=lifespan)
+
+# разрешенные ссылки
+origins = [
+    "http://localhost:8000",  # API проекта
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,  # разрешить отправку куки/авторизации
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 @app.exception_handler(UserAlreadyExistsError)
