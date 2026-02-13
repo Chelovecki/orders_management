@@ -39,8 +39,7 @@ class OrderServices(BaseService):
 
         total_sum = sum(item.price * item.quantity for item in items)
 
-        order = OrderModel(user_id=user_id, items=items_data,
-                           total_price=total_sum)
+        order = OrderModel(user_id=user_id, items=items_data, total_price=total_sum)
 
         async with self.session_factory() as session:
             session.add(order)
@@ -48,7 +47,9 @@ class OrderServices(BaseService):
             await session.refresh(order, ["user"])
             return order
 
-    async def get_order(self, order_id: uuid.UUID, request_from_user_id: int) -> OrderModel:
+    async def get_order(
+        self, order_id: uuid.UUID, request_from_user_id: int
+    ) -> OrderModel:
 
         async with self.session_factory() as session:
             order = await session.get(OrderModel, order_id)
@@ -64,7 +65,6 @@ class OrderServices(BaseService):
             order = await session.get(OrderModel, order_id)
 
             if not order or order.user_id != request_from_user_id:
-                print(bool(order), bool(order.user_id != request_from_user_id))
                 raise OrderNotFoundError(order_id)
 
             order.status = new_status

@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
-load_dotenv("docker/.env.local")
+load_dotenv("docker/.env")
 
 
 class PostgresSettings:
@@ -50,4 +50,15 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/token")
 class RedisSettings:
     HOST = os.getenv("REDIS_HOST", "localhost")
     PORT = int(os.getenv("REDIS_PORT", "6379"))
-    DB = int(os.getenv("REDIS_DB", "0"))
+    DB_CACHE_ORDERS = int(os.getenv("REDIS_DB_CACHE_ORDERS", "0"))
+    DB_CELERY = int(os.getenv("REDIS_DB_CELERY", "1"))
+
+
+# src/settings.py
+class RabbitSettings:
+    HOST = os.getenv("RABBITMQ_HOST", "localhost")
+    PORT = int(os.getenv("RABBITMQ_PORT", "5672"))
+    USER = os.getenv("RABBITMQ_USER", "guest")
+    PASSWORD = os.getenv("RABBITMQ_PASSWORD", "guest")
+
+    URL = f"amqp://{USER}:{PASSWORD}@{HOST}:{PORT}/"

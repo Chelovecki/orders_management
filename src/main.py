@@ -1,3 +1,5 @@
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI, Request, status
 from fastapi.responses import JSONResponse
 
@@ -10,8 +12,17 @@ from src.exceptions import (
     OrderNotFoundError,
     UserAlreadyExistsError,
 )
+from src.rabbit import close_rabbit, init_rabbit
 
-app = FastAPI()
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    await init_rabbit()
+    yield
+    await close_rabbit()
+
+
+app = FastAPI(lifespan=lifespan)
 
 
 @app.exception_handler(UserAlreadyExistsError)

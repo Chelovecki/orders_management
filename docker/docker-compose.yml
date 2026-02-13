@@ -2,10 +2,12 @@ services:
   postgres:
     image: postgres:latest
     container_name: postgres_db
-    ports: 
+    ports:
       - "5432:5432"
     env_file:
       - .env
+    environment:
+      - POSTGRES_HOST=postgres
 
   redis:
     image: redis:alpine
@@ -14,3 +16,18 @@ services:
       - "6379:6379"
     env_file:
       - .env
+    environment:
+      - REDIS_HOST=redis
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    ports:
+      - "5672:5672" # основной
+      - "15672:15672" # веб-интерфейс
+    env_file:
+      - .env
+    environment:
+      - RABBITMQ_HOST=rabbitmq
+
+    restart: unless-stopped
