@@ -3,6 +3,10 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+from slowapi.middleware import SlowAPIMiddleware
+from slowapi.util import get_remote_address
 
 from src.api.auth.router import auth_router
 from src.api.orders.router import order_router
@@ -16,6 +20,7 @@ from src.exceptions import (
 from src.rabbit import close_rabbit, init_rabbit
 
 
+# Запуск Rabbit
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await init_rabbit()
@@ -25,7 +30,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 
-# разрешенные ссылки
+# CORS-защита
 origins = [
     "http://localhost:8000",  # API проекта
 ]
@@ -37,6 +42,12 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Rate Limiter
+limiter = Limiter(key_func=get_remote_address, default_limits=["50/minute"])
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+app.add_middleware(SlowAPIMiddleware)
 
 
 @app.exception_handler(UserAlreadyExistsError)

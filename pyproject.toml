@@ -22,6 +22,7 @@ dependencies = [
     "ruff>=0.15.0",
     "redis>=7.1.1",
     "aio-pika>=9.5.8",
+    "slowapi>=0.1.9",
 ]
 
 [tool.ruff]
@@ -54,3 +55,8 @@ known-third-party = ["pydantic", "fastapi", "sqlalchemy", "asyncpg", "jinja2"]
 [tool.ruff.format]
 indent-style = "space"
 quote-style = "double"
+
+[dependency-groups]
+dev = [
+    "ruff>=0.15.0",
+]
