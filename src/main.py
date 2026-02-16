@@ -16,6 +16,7 @@ from src.exceptions import (
     InvalidOrderError,
     OrderNotFoundError,
     UserAlreadyExistsError,
+    UserNotFoundError,
 )
 from src.rabbit import close_rabbit, init_rabbit
 
@@ -59,6 +60,14 @@ async def user_exists_handler(request: Request, exc: UserAlreadyExistsError):
             "field": exc.field,
             "value": exc.value,
         },
+    )
+
+
+@app.exception_handler(UserNotFoundError)
+async def user_not_found_handler(request: Request, exc: UserNotFoundError):
+    return JSONResponse(
+        status_code=404,
+        content={"error": "user_not_found", "user_id": exc.user_id}
     )
 
 

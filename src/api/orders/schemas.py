@@ -24,8 +24,8 @@ class OrderSchema(BaseSchema):
 
 class OrderItemSchema(BaseSchema):
     name: str
-    price: Decimal
-    quantity: int
+    price: Decimal = Field(gt=0)
+    quantity: int = Field(gt=0)
 
 
 class OrderCreateSchema(BaseSchema):

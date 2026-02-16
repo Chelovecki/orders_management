@@ -1,6 +1,6 @@
 services:
   postgres:
-    image: postgres:latest
+    image: postgres:17
     container_name: postgres_db
     ports:
       - "5432:5432"
@@ -11,7 +11,7 @@ services:
 
     healthcheck:
       test:
-        ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-} -d ${POSTGRES_DB:-}"]
+        ["CMD-SHELL", "pg_isready -U ${POSTGRES_USERNAME:-} -d ${POSTGRES_DB:-}"]
       interval: 5s
       timeout: 2s
       retries: 5
@@ -50,8 +50,8 @@ services:
       - .env
     environment:
       - RABBITMQ_HOST=rabbitmq
-      - RABBITMQ_DEFAULT_USER=guest
-      - RABBITMQ_DEFAULT_PASSWORD=guest
+      - RABBITMQ_USER=guest
+      - RABBITMQ_PASSWORD=guest
     healthcheck:
       test: ["CMD", "rabbitmq-diagnostics", "ping"]
       interval: 10s
@@ -59,30 +59,30 @@ services:
       retries: 5
     restart: unless-stopped
   
-    app:
-      build:
-        context: ..
-        dockerfile: docker/Dockerfile
-      container_name: fastapi_app
-      env_file:
-        - .env
-      environment:
-        - POSTGRES_HOST=postgres
-        - REDIS_HOST=redis
-        - RABBITMQ_HOST=rabbitmq
-      ports:
-        - "8000:8000"
-      command: uvicorn src.main:app --host 0.0.0.0 --reload
-      depends_on:
-        postgres:
-          condition: service_healthy
-        redis:
-          condition: service_healthy
-        rabbitmq:
-          condition: service_healthy
-      volumes:
-        - ../src:/app/src   # только для разработки
-      restart: unless-stopped
+  app:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: fastapi_app
+    env_file:
+      - .env
+    environment:
+      - POSTGRES_HOST=postgres
+      - REDIS_HOST=redis
+      - RABBITMQ_HOST=rabbitmq
+    ports:
+      - "8000:8000"
+    command: uv run uvicorn src.main:app --host 0.0.0.0 --reload
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    volumes:
+      - ../src:/app/src   # только для разработки
+    restart: unless-stopped
 
   celery_worker:
     build:
@@ -95,7 +95,7 @@ services:
       - POSTGRES_HOST=postgres
       - REDIS_HOST=redis
       - RABBITMQ_HOST=rabbitmq
-    command: celery -A src.celery_app worker --loglevel=info
+    command: uv run celery -A src.celery_app worker --loglevel=info
     depends_on:
       redis:
         condition: service_healthy
@@ -116,7 +116,7 @@ services:
       - POSTGRES_HOST=postgres
       - REDIS_HOST=redis
       - RABBITMQ_HOST=rabbitmq
-    command: python -m src.consumer
+    command: uv run python -m src.consumer
     depends_on:
       rabbitmq:
         condition: service_healthy
@@ -124,6 +124,12 @@ services:
         condition: service_healthy
     volumes:
       - ../src:/app/src
+    healthcheck:
+      test: ["CMD", "pgrep", "-f", "uv run python -m src.consumer"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
     restart: unless-stopped
 
 volumes:

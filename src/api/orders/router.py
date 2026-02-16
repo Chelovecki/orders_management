@@ -4,6 +4,7 @@ import uuid
 
 import aio_pika
 from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy import delete
 
 from src.api.dependencies import get_current_user
 from src.api.orders.schemas import OrderCreateSchema, OrderSchema, OrderUpdateSchema
@@ -55,7 +56,7 @@ async def get_order(
     if data := await redis.get(redis_key):
         return OrderSchema.model_validate_json(data)
 
-    async with redis.lock(lock_key, timeout=5):
+    async with redis.lock(lock_key, timeout=2):
         # Проверяем снова после получения lock
         if data := await redis.get(redis_key):
             return OrderSchema.model_validate_json(data)
@@ -84,7 +85,11 @@ async def change_order(
         new_status=form_data.status,
     )
 
-    await redis.delete(str(order.id))
+    redis.set(
+        name=order.id,
+        value=OrderSchema.model_validate(order).model_dump_json(),
+        ex=300
+    )
 
     return OrderSchema.model_validate(order)
 
@@ -94,6 +99,7 @@ async def get_users_orders(
     user_id: int,
     current_user: UserModel = Depends(get_current_user),
 ) -> list[OrderSchema]:
+
     if user_id != current_user.id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,

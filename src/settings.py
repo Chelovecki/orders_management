@@ -44,7 +44,7 @@ class JWT:
         raise Exception("JWT algorithm doesn't set up")
 
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/token")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/token")
 
 
 class RedisSettings:
