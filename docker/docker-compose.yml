@@ -113,9 +113,11 @@ services:
     env_file:
       - .env
     environment:
+      - PYTHONUNBUFFERED=1
       - POSTGRES_HOST=postgres
       - REDIS_HOST=redis
       - RABBITMQ_HOST=rabbitmq
+      
     command: uv run python -m src.consumer
     depends_on:
       rabbitmq:

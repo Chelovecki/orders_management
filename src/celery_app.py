@@ -1,6 +1,3 @@
-# src/celery_app.py
-import time
-
 from celery import Celery
 
 from src.settings import RedisSettings as r
@@ -10,3 +7,5 @@ celery_app = Celery(
     broker=f"redis://{r.HOST}:{r.PORT}/{r.DB_CELERY}",
     backend=f"redis://{r.HOST}:{r.PORT}/{r.DB_CELERY}",
 )
+
+celery_app.autodiscover_tasks(["src.api.orders"])

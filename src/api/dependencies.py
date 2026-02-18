@@ -1,4 +1,5 @@
-from fastapi import Depends
+import aio_pika
+from fastapi import Depends, Request
 from pydantic import BaseModel, ConfigDict
 
 from src.exceptions import InvalidCredentialsError
@@ -25,3 +26,7 @@ async def get_current_user(token: str = Depends(oauth2_scheme)):
 
 class BaseSchema(BaseModel):
     model_config = ConfigDict(extra="forbid", from_attributes=True)
+
+
+def get_rabbit_channel(request: Request) -> aio_pika.Channel:
+    return request.app.state.rabbit_channel
